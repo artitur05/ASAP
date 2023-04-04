@@ -1,19 +1,19 @@
 <?php
-    = ['яблок','яблоко','яблока'];
+    $arr = ['яблок','яблоко','яблока'];
 
-for(=0 ; <=50 ; ++){
+for($i=0 ; $i<=50 ; $i++){
     
-if (==0 or %10==0 or %10>4 or >10 and <15)
+if ($i==0 or $i%10==0 or $i%10>4 or $i>10 and $i<15)
 {
-    echo , ,[0],PHP_EOL;
+    echo $arr[0],PHP_EOL;
 }
-else if (%10>0 and %10<2)
+else if ($i%10>0 and $i%10<2)
 {
-    echo , ,[1],PHP_EOL;
+    echo $arr[1],PHP_EOL;
 }
 else
 {
-echo , ,[2],PHP_EOL;
+echo $arr[2],PHP_EOL;
 }
 }
 ?>
