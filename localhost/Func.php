@@ -2,11 +2,11 @@
 
 function total($cart)
 {
-    $dateWD = date("m.d.y");
+
     $sum = 0;
     foreach ($cart as $item)
     {
-        $sum = $sum + $item['price'] * $item['qty'] . ' ' . $dateWD;
+        $sum = $sum + $item['price'] * $item['qty'];
     }
     return $sum;
 }

@@ -19,5 +19,4 @@ $cart = [
         'qty' => 6
     ]
 ];
-_log($cart);
 _log('Сумма равна ' . total($cart));

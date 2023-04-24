@@ -10,7 +10,7 @@ function _log($str)
 
     fputs($file,
         print_r($str,1)
-        . PHP_EOL);
+        . PHP_EOL . $dateWD = date("m.d.y"));
 }
 
 
