@@ -9,8 +9,10 @@ function _log($str)
         'a+');
 
     fputs($file,
+        date("m.d.y")
+        . PHP_EOL .
         print_r($str,1)
-        . PHP_EOL . $dateWD = date("m.d.y"));
+        . PHP_EOL );
 }
 
 
