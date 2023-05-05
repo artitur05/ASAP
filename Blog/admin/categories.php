@@ -84,7 +84,7 @@ $category = $result->fetchAll();
 
 </form>
 <?php foreach ($category as $cat):?>
-    <li><a href="/post.php?id=<?=$cat['id']?>"><?=$cat['title']?></a>
+    <li><a href="/categories.php?id=<?=$cat['id']?>"><?=$cat['title']?></a>
         <a href="?id=<?=$cat['id']?>&action=edit">[Edit]</a>
     <a href="?id=<?=$cat['id']?>&action=delete">[Delete]</a>
     </li>
