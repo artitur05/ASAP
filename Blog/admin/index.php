@@ -6,20 +6,22 @@ include dirname(__DIR__) . "/functions/db.php";
 $messages = [
     'del' => 'Пост удален',
     'add' => 'Пост добавлен',
-    'edit' => 'Пост изменен'
+    'edit' => 'Пост изменен',
+    'error' => 'Ошибка'
 ];
 
-$message = !empty($_GET['status']) ? $messages[$_GET['status']] : '';
+$action = $_GET['action'] ?? '';
+
+$message = !empty($_GET['status']) ? $messages[$_GET['status']] ?? '' : '';
+
 $raw = [
     'id' => 0,
     'title' => '',
     'text' => '',
-    'image' => ''
+    'category_id' => '',
 ];
-$action = "add";
+$formAction = "add";
 $formText = "Добавить";
-
-
 
 //CRUD edit
 if (!empty($_GET['action']) and $_GET['action'] == 'edit') {
@@ -35,11 +37,10 @@ if (!empty($_GET['action']) and $_GET['action'] == 'save') {
     $title = strip_tags($_POST['title']);
     $category_id = strip_tags($_POST['category']);
     $text = strip_tags($_POST['text']);
-    $image = strip_tags($_POST['image']);
     $id = (int)$_POST['id'];
 
-    $result = getConnection()->prepare("UPDATE posts SET title = ?, text = ?, category_id = ?, image = ? WHERE id = ?");
-    $result->execute([$title, $text, $category_id, $image, $id]);
+    $result = getConnection()->prepare("UPDATE posts SET title = ?, text = ?, category_id = ? WHERE id = ?");
+    $result->execute([$title, $text, $category_id, $id]);
 
     header("Location: /admin?status=edit");
     die();
@@ -50,7 +51,28 @@ if (!empty($_POST) and $_GET['action'] == 'add')
     $title = strip_tags($_POST['title']);
     $category_id = strip_tags($_POST['category']);
     $text = strip_tags($_POST['text']);
-    $image = strip_tags($_POST['image']);
+    $image = '';
+    if (!empty($_FILES)) {
+        if ($_FILES["image"]["size"] > 1024 * 5 * 1024) {
+            echo("Размер файла не больше 5 мб");
+            exit;
+        }
+
+        $blacklist = [".php", ".phtml", ".php3", ".php4"];
+        foreach ($blacklist as $item) {
+            if (preg_match("/$item\$/i", $_FILES['image']['name'])) {
+                echo "Загрузка php-файлов запрещена!";
+                exit;
+            }
+        }
+
+        if (!move_uploaded_file($_FILES["image"]["tmp_name"], $_SERVER['DOCUMENT_ROOT'] . '/images/' . $_FILES['image']['name'])) {
+            header("Location: ?status=error");
+            die();
+        }
+
+        $image = $_FILES['image']['name'];
+    }
 
     $result = getConnection()->prepare("INSERT INTO posts (title, text, category_id,image) VALUES (?,?,?,?)");
     $result->execute([$title, $text, $category_id,$image]);
@@ -75,6 +97,11 @@ if(!empty($_GET['action']) and $_GET['action']== 'delete')
 $result = getConnection()->prepare("SELECT * FROM posts ORDER BY id DESC");
 $result->execute();
 $posts = $result->fetchAll();
+
+$resultCategories = getConnection()->prepare("SELECT * FROM categories");
+$resultCategories->execute();
+$categories = $resultCategories->fetchAll();
+
 ?>
 
 <!doctype html>
@@ -97,97 +124,24 @@ $posts = $result->fetchAll();
     <input hidden type="text" name="id"  value="<?=$raw['id']?>">
 
     <select name="category">
-    <option value="1">Мясо</option>
-    <option value="2">Хлеб</option>
-        <option value="3">Рыба</option>
-        <option value="4">Картошка</option>
+        <?php foreach ($categories as $category): ?>
+            <option
+                <?php if ($category['id'] == $raw['category_id']): ?>
+                    selected
+                <?php endif; ?>
+                value="<?= $category['id'] ?>">  <?= $category['catName'] ?>
+            </option>
+        <?php endforeach; ?>
     </select><br>
 
-Текст поста: <br>
-<textarea name="text" cols="30" rows="2"><?= $raw['text'] ?></textarea>
-<input type="submit" value=<?=$formText?>>
+    Текст поста: <br>
+    <textarea name="text" cols="30" rows="2"><?= $raw['text'] ?></textarea><br>
 
-    <input type="hidden" name="MAX_FILE_SIZE" value="3000" />
-    <input name="userfile" type="file" />
+    Загрузите картинку<br>
+    <input type="file" name="image"><br>
+    <input type="submit" value="<?= $formText ?>">
 
-
-    <?php
-// File upload.php
-// Если в $_FILES существует "image" и она не NULL
-if (isset($_FILES['image'])) {
-// Получаем нужные элементы массива "image"
-$fileTmpName = $_FILES['image']['tmp_name'];
-$errorCode = $_FILES['image']['error'];
-// Проверим на ошибки
-if ($errorCode !== UPLOAD_ERR_OK || !is_uploaded_file($fileTmpName)) {
-    // Массив с названиями ошибок
-    $errorMessages = [
-      UPLOAD_ERR_INI_SIZE   => 'Размер файла превысил значение upload_max_filesize в конфигурации PHP.',
-      UPLOAD_ERR_FORM_SIZE  => 'Размер загружаемого файла превысил значение MAX_FILE_SIZE в HTML-форме.',
-      UPLOAD_ERR_PARTIAL    => 'Загружаемый файл был получен только частично.',
-      UPLOAD_ERR_NO_FILE    => 'Файл не был загружен.',
-      UPLOAD_ERR_NO_TMP_DIR => 'Отсутствует временная папка.',
-      UPLOAD_ERR_CANT_WRITE => 'Не удалось записать файл на диск.',
-      UPLOAD_ERR_EXTENSION  => 'PHP-расширение остановило загрузку файла.',
-    ];
-    // Зададим неизвестную ошибку
-    $unknownMessage = 'При загрузке файла произошла неизвестная ошибка.';
-    // Если в массиве нет кода ошибки, скажем, что ошибка неизвестна
-    $outputMessage = isset($errorMessages[$errorCode]) ? $errorMessages[$errorCode] : $unknownMessage;
-    // Выведем название ошибки
-    die($outputMessage);
-} else {
-    // Создадим ресурс FileInfo
-    $fi = finfo_open(FILEINFO_MIME_TYPE);
-    // Получим MIME-тип
-    $mime = (string) finfo_file($fi, $fileTmpName);
-    // Проверим ключевое слово image (image/jpeg, image/png и т. д.)
-    if (strpos($mime, 'image') === false) die('Можно загружать только изображения.');
-
-    // Результат функции запишем в переменную
-    $image = getimagesize($fileTmpName);
-
-    // Зададим ограничения для картинок
-    $limitBytes  = 1024 * 1024 * 5;
-    $limitWidth  = 1280;
-    $limitHeight = 768;
-
-    // Проверим нужные параметры
-    if (filesize($fileTmpName) > $limitBytes) die('Размер изображения не должен превышать 5 Мбайт.');
-    if ($image[1] > $limitHeight)             die('Высота изображения не должна превышать 768 точек.');
-    if ($image[0] > $limitWidth)              die('Ширина изображения не должна превышать 1280 точек.');
-
-    // Сгенерируем новое имя файла через функцию getRandomFileName()
-    $name = getRandomFileName($fileTmpName);
-
-    // Сгенерируем расширение файла на основе типа картинки
-    $extension = image_type_to_extension($image[2]);
-
-    // Сократим .jpeg до .jpg
-    $format = str_replace('jpeg', 'jpg', $extension);
-
-    // Переместим картинку с новым именем и расширением в папку /upload
-    if (!move_uploaded_file($fileTmpName, __DIR__ . '/upload/' . $name . $format)) {
-        die('При записи изображения на диск произошла ошибка.');
-    }
-
-    echo 'Картинка успешно загружена!';
-  }
-};
-
-// File functions.php
-function getRandomFileName($path)
-{
-  $path = $path ? $path . '/' : '';
-  do {
-      $name = md5(microtime() . rand(0, 9999));
-      $file = $path . $name;
-  } while (file_exists($file));
-
-  return $name;
-}?>
 </form>
-
     <?php foreach ($posts as $post):?>
         <li><a href="/post.php?id=<?=$post['id']?>"><?=$post['title']?></a>
             <a href="?id=<?=$post['id']?>&action=edit">[Edit]</a>

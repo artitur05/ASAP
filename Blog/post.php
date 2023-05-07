@@ -6,6 +6,7 @@ $result = getConnection()->prepare('SELECT * FROM posts
     JOIN categories ON posts.category_id = categories.id WHERE posts.id = :id'
 );
 $result->execute([':id'=>$id]);
+$post = $result->fetch();
 $cat = $result->fetch();
 ?>
 
@@ -21,10 +22,15 @@ $cat = $result->fetch();
 </head>
 <body>
 <?php include __DIR__ . "/widgets/menu.php"; ?>
-<b><?=$cat['catName']?></b><br>
-<b><?=$cat['title']?></b>
-<p><?=$cat['text']?></p>
-<img src="<?=$cat['image']?>
-" alt= type hidden>
+<?php if (!empty($post)): ?>
+    <b>Пост категории <?= $post['title'] ?></b>
+    <h2><?= $post['title'] ?></h2>
+    <img src="/images/<?=$post['image']?>"
+         alt=""
+         width="200" style="float: left; margin-right: 20px">
+    <p><?= $post['text'] ?></p>
+<?php else: ?>
+    Нет такого поста
+<?php endif; ?>
 </body>
 </html>
