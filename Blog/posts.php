@@ -2,7 +2,7 @@
 include __DIR__ . '/functions/db.php';
 $title = 'Posts';
 $id = $_GET['category_id'];
-$result = getConnection()->prepare('SELECT id,title FROM posts WHERE category_id = :id');
+$result = getConnection()->prepare('SELECT * FROM posts WHERE category_id = :id');
 $result->execute([':id'=>$id]);
 $posts = $result->fetchAll();
 $catNam = getConnection()->prepare('SELECT "catName" FROM categories WHERE id = :id');

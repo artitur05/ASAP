@@ -1,4 +1,4 @@
-<?php
+    <?php
 include dirname(__DIR__) . "/functions/db.php";
 //messages
 $messages = [
@@ -10,7 +10,7 @@ $messages = [
 $message = !empty($_GET['status']) ? $messages[$_GET['status']] : '';
 $raw = [
     'id' => 0,
-    'title' => '',
+    'catName' => '',
 ];
 $action = "add";
 $formText = "Добавить";
@@ -78,13 +78,13 @@ $category = $result->fetchAll();
 <h3 style="color: red"><?=$message?></h3>
 <form action="?action=<?=$action?>" method="post">
     Название категории:<br>
-    <input type="text" name="title" value="<?=$raw['title']?>"><br>
+    <input type="text" name="catName" value="<?=$raw['catName']?>"><br>
     <input hidden type="text" name="id"  value="<?=$raw['id']?>">
     <a><?=var_dump($raw);?></a>
 
 </form>
 <?php foreach ($category as $cat):?>
-    <li><a href="/categories.php?id=<?=$cat['id']?>"><?=$cat['title']?></a>
+    <li><a href="/categories.php?id=<?=$cat['id']?>"><?=$cat['catName']?></a>
         <a href="?id=<?=$cat['id']?>&action=edit">[Edit]</a>
     <a href="?id=<?=$cat['id']?>&action=delete">[Delete]</a>
     </li>
